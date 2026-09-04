@@ -1,5 +1,7 @@
 # Scan-to-Summon
 
+[![iOS](https://github.com/RudiPangestu/AR-game/actions/workflows/ios.yml/badge.svg)](https://github.com/RudiPangestu/AR-game/actions/workflows/ios.yml)
+
 Game AR iPhone: arahkan kamera ke benda nyata di rumahmu, benda itu dikenali di perangkat, lalu "menetas" jadi kreatur yang bisa dikoleksi dan diadu.
 
 Gelas kopi jadi kreatur air. Sepatu jadi kreatur cepat. Scan gelas yang sama besok — kreaturnya tetap sama persis.
