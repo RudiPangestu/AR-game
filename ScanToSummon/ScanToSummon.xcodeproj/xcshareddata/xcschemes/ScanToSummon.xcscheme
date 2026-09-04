@@ -27,8 +27,9 @@
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       shouldUseLaunchSchemeArgsEnv = "YES">
-      <TestPlans>
-      </TestPlans>
+      <!-- No <TestPlans> element on purpose: its presence, even when empty,
+           makes Xcode ignore <Testables> and report the scheme as having no
+           test action. -->
       <Testables>
          <TestableReference
             skipped = "NO">
