@@ -43,6 +43,25 @@ jobs:
           echo "udid=$UDID" >> "$GITHUB_OUTPUT"
           xcrun simctl list devices available | grep -i iphone | head -5
 
+      # The Simulator build alone is not enough coverage: ARScanController and
+      # HatchEffect sit behind `#if !targetEnvironment(simulator)`, so a
+      # Simulator-only CI compiles neither of them and can go green while the AR
+      # layer is broken. That is exactly what happened once. This step compiles
+      # against the device SDK so those files are type-checked too.
+      - name: Compile for device SDK
+        working-directory: ScanToSummon
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project ScanToSummon.xcodeproj \
+            -scheme ScanToSummon \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            | tee device-build.log
+
       - name: Build and test
         working-directory: ScanToSummon
         run: |
@@ -59,16 +78,18 @@ jobs:
         working-directory: ScanToSummon
         run: |
           echo "::group::compiler errors"
-          grep -E "error:" build.log | grep -v "^ *~*\^" | sort -u | head -60 || true
+          grep -hE "error:" device-build.log build.log 2>/dev/null | grep -v "^ *~*\^" | sort -u | head -60 || true
           echo "::endgroup::"
           echo "::group::failed tests"
-          grep -E "^Test Case .* failed|XCTAssert.* failed" build.log | sort -u | head -60 || true
+          grep -E "^Test Case .* failed|XCTAssert.* failed" build.log 2>/dev/null | sort -u | head -60 || true
           echo "::endgroup::"
 
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: ScanToSummon/build.log
+          name: build-logs
+          path: |
+            ScanToSummon/build.log
+            ScanToSummon/device-build.log
           if-no-files-found: ignore

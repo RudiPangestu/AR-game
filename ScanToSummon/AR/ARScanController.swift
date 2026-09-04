@@ -29,7 +29,11 @@ final class ARScanController: NSObject, ObservableObject, ARSessionDelegate {
     private var summonedAnchor: AnchorEntity?
     private var bodyEntity: Entity?
     private var rootEntity: Entity?
-    private var updateSubscription: AnyCancellable?
+    /// `Scene.subscribe` hands back the `Cancellable` protocol, not Combine's
+    /// concrete `AnyCancellable`, so the existential is stored and cancelled by
+    /// hand in `deinit` — `AnyCancellable`'s automatic cancel-on-deinit does not
+    /// come along with it.
+    private var updateSubscription: (any Cancellable)?
     private var elapsed: TimeInterval = 0
 
     init(visuals: CreatureVisualProvider = CompositeVisualProvider()) {
@@ -41,6 +45,10 @@ final class ARScanController: NSObject, ObservableObject, ARSessionDelegate {
         arView.session.delegateQueue = .main
         arView.automaticallyConfigureSession = false
         subscribeToSceneUpdates()
+    }
+
+    deinit {
+        updateSubscription?.cancel()
     }
 
     // MARK: - Session lifecycle
