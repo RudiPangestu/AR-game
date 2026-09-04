@@ -1,0 +1,71 @@
+name: iOS
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    # macOS runner: the only place this project can actually be compiled.
+    runs-on: macos-15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # Simulator names drift between runner images, so the device is resolved
+      # at run time rather than hard-coded into the destination string.
+      - name: Pick a simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available --json \
+            | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)['devices']
+          runtimes = sorted(k for k in data if 'iOS' in k)
+          for runtime in reversed(runtimes):
+              for device in data[runtime]:
+                  if device.get('isAvailable') and 'iPhone' in device['name']:
+                      print(device['udid'])
+                      raise SystemExit
+          raise SystemExit('no available iPhone simulator')
+          ")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl list devices available | grep -i iphone | head -5
+
+      - name: Build and test
+        working-directory: ScanToSummon
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project ScanToSummon.xcodeproj \
+            -scheme ScanToSummon \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee build.log
+
+      - name: Surface compiler errors
+        if: failure()
+        working-directory: ScanToSummon
+        run: |
+          echo "::group::errors"
+          grep -E "error:|warning: .*(unused|never used)" build.log | sort -u | head -80 || true
+          echo "::endgroup::"
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: ScanToSummon/build.log
+          if-no-files-found: ignore
