@@ -1,0 +1,23 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSCameraUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan-to-Summon uses the camera to recognise objects around you and hatch creatures from them."
+          }
+        },
+        "id": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan-to-Summon memakai kamera untuk mengenali benda di sekitarmu dan menetaskan kreatur darinya."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}
