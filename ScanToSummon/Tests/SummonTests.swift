@@ -67,20 +67,49 @@ final class DeterminismTests: XCTestCase {
         XCTAssertNotEqual(first.id, second.id)
     }
 
-    func testSmallLightingChangesDoNotMintANewCreature() {
+    /// Colour must not touch identity at all.
+    ///
+    /// This started as a weaker test about *small* lighting changes, and CI
+    /// caught the flaw it was too generous to see: with colour bucketed into
+    /// the signature, an object sitting near a bucket edge produced a different
+    /// creature on consecutive scans. Colour now only tints, so the claim can
+    /// be the strong one — even wildly different lighting is the same creature.
+    func testLightingDoesNotAffectIdentityAtAll() {
         let factory = CreatureFactory()
         let observations = [ScanObservation(label: "coffee_mug", confidence: 0.55)]
 
-        let bright = factory.make(
+        let daylight = factory.make(
             observations: observations,
-            averageColor: ColorRGB(red: 0.210, green: 0.440, blue: 0.780)
+            averageColor: ColorRGB(red: 0.82, green: 0.79, blue: 0.74)
         )
-        let dim = factory.make(
+        let lamplight = factory.make(
             observations: observations,
-            averageColor: ColorRGB(red: 0.225, green: 0.452, blue: 0.769)
+            averageColor: ColorRGB(red: 0.11, green: 0.09, blue: 0.31)
         )
 
-        XCTAssertEqual(bright.signature, dim.signature)
+        XCTAssertEqual(daylight.signature, lamplight.signature)
+        XCTAssertEqual(daylight.baseStats, lamplight.baseStats)
+        XCTAssertEqual(daylight.name, lamplight.name)
+        // ...but they still look like the object they came from.
+        XCTAssertNotEqual(daylight.tint, lamplight.tint)
+    }
+
+    /// The specific values that used to break identity: 0.50 and 0.51 fell on
+    /// opposite sides of a bucket edge.
+    func testColoursOnAFormerBucketEdgeAreTheSameCreature() {
+        let factory = CreatureFactory()
+        let observations = [ScanObservation(label: "mug", confidence: 0.55)]
+
+        let below = factory.make(
+            observations: observations,
+            averageColor: ColorRGB(red: 0.50, green: 0.30, blue: 0.10)
+        )
+        let above = factory.make(
+            observations: observations,
+            averageColor: ColorRGB(red: 0.51, green: 0.31, blue: 0.11)
+        )
+
+        XCTAssertEqual(below.signature, above.signature)
     }
 
     func testDifferentObjectsProduceDifferentCreatures() {
@@ -132,23 +161,6 @@ final class DeterminismTests: XCTestCase {
 }
 
 final class ColorRGBTests: XCTestCase {
-
-    func testBucketKeyIsStableAcrossSmallChanges() {
-        let a = ColorRGB(red: 0.50, green: 0.30, blue: 0.10)
-        let b = ColorRGB(red: 0.51, green: 0.31, blue: 0.11)
-        XCTAssertEqual(a.bucketKey, b.bucketKey)
-    }
-
-    func testBucketKeySeparatesDistinctColors() {
-        let blue = ColorRGB(red: 0.1, green: 0.1, blue: 0.9)
-        let red = ColorRGB(red: 0.9, green: 0.1, blue: 0.1)
-        XCTAssertNotEqual(blue.bucketKey, red.bucketKey)
-    }
-
-    func testBucketKeyNeverOverflowsAtFullWhite() {
-        XCTAssertEqual(ColorRGB(red: 1, green: 1, blue: 1).bucketKey, "777")
-        XCTAssertEqual(ColorRGB(red: 0, green: 0, blue: 0).bucketKey, "000")
-    }
 
     func testGreyObjectsStillGetAColouredCreature() {
         let grey = ColorRGB(red: 0.5, green: 0.5, blue: 0.5).vivid()

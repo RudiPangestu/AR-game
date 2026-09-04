@@ -15,18 +15,14 @@ public struct ColorRGB: Codable, Equatable, Sendable {
 
     public static let neutral = ColorRGB(red: 0.6, green: 0.6, blue: 0.62)
 
-    /// Quantises each channel into one of eight buckets.
-    ///
-    /// This is what makes a scan *stable*: two photos of the same blue mug will
-    /// differ slightly in average colour, but almost always land in the same
-    /// bucket, so they produce the same creature. Without this the "scan the
-    /// same object twice, get the same creature" promise would not hold.
-    public var bucketKey: String {
-        let r = Int(red * 7.999)
-        let g = Int(green * 7.999)
-        let b = Int(blue * 7.999)
-        return "\(r)\(g)\(b)"
-    }
+    // Colour deliberately plays no part in a creature's identity — it only
+    // tints the body. An earlier version bucketed each channel and folded that
+    // into the signature, which CI caught as a real defect: an object whose
+    // average colour sits near a bucket edge (0.50 with eight buckets, say)
+    // flips between two buckets on consecutive scans and mints two different
+    // creatures from one mug. Every quantisation has edges, so no bucket count
+    // fixes it. Dropping colour from identity makes "same object, same
+    // creature" unconditionally true instead of usually true.
 
     /// A more saturated version, used so creatures never look washed out when
     /// the scanned object is a dull grey.

@@ -66,7 +66,7 @@ Aturan `Core/` tidak boleh mengimpor framework UI bukan gaya-gayaan — itulah y
 
 1. **Klasifikasi** — `VNClassifyImageRequest` dari Vision, di perangkat, ~1300 kategori, tanpa bundling model dan tanpa jaringan.
 2. **Pemetaan** — label diurai dari kata terakhir, karena "coffee table" itu meja dan "teddy bear" itu beruang. Tidak cocok → archetype `void`, dibingkai sebagai penemuan, bukan error.
-3. **Stat deterministik** — seed dari `(label, warna terkuantisasi)` lewat FNV-1a. `hashValue` Swift tidak dipakai karena di-seed ulang tiap proses, yang akan diam-diam merusak janji "benda yang sama = kreatur yang sama".
+3. **Stat deterministik** — seed dari label lewat FNV-1a. `hashValue` Swift tidak dipakai karena di-seed ulang tiap proses, yang akan diam-diam merusak janji "benda yang sama = kreatur yang sama". Warna sengaja tidak ikut menentukan identitas — hanya tint — karena warna rata-rata bergeser mengikuti cahaya.
 4. **Menetas** — telur muncul di permukaan, retak dua kali, lalu meletus. ±2.2 detik, dengan haptics.
 5. **Tarung** — turn-based 3v3 di layar 2D biasa. Sengaja bukan AR: inilah lapisan yang bisa dimainkan sambil rebahan.
 

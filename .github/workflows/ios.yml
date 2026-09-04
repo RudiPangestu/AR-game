@@ -54,12 +54,15 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             | tee build.log
 
-      - name: Surface compiler errors
+      - name: Surface failures
         if: failure()
         working-directory: ScanToSummon
         run: |
-          echo "::group::errors"
-          grep -E "error:|warning: .*(unused|never used)" build.log | sort -u | head -80 || true
+          echo "::group::compiler errors"
+          grep -E "error:" build.log | grep -v "^ *~*\^" | sort -u | head -60 || true
+          echo "::endgroup::"
+          echo "::group::failed tests"
+          grep -E "^Test Case .* failed|XCTAssert.* failed" build.log | sort -u | head -60 || true
           echo "::endgroup::"
 
       - name: Upload build log

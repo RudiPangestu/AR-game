@@ -35,10 +35,20 @@ Konsekuensi yang harus dijaga:
 | Konsekuensi | Penanganan |
 |---|---|
 | Tidak ada yang bisa di-reroll | Scan ulang memberi +6% stat per duplikat, mentok di 10× (Lv 11, ×1.6) |
-| Perubahan cahaya kecil bisa mengubah warna rata-rata | Warna dikuantisasi ke 8 bucket per kanal sebelum masuk signature |
+| Cahaya mengubah warna rata-rata antar-scan | **Warna tidak ikut menentukan identitas sama sekali** — lihat di bawah |
 | `hashValue` Swift di-seed per proses | Dipakai FNV-1a buatan sendiri (`StableHash`), bukan hash bawaan |
 
 Uji `DeterminismTests.testSameScanProducesIdenticalCreature` menjaga janji ini. Kalau tes itu merah, desainnya yang rusak, bukan cuma kodenya.
+
+### Kenapa warna dikeluarkan dari signature
+
+Versi pertama memakai `(label, warna terkuantisasi)` sebagai seed, dengan warna dibucket ke 8 tingkat per kanal supaya perubahan cahaya kecil tidak berpengaruh. CI membuktikan itu cacat: `0.50` dan `0.51` jatuh di sisi berlawanan dari batas bucket, jadi benda yang warna rata-ratanya kebetulan dekat batas akan menghasilkan **dua kreatur berbeda dari satu gelas**.
+
+Menambah atau mengurangi jumlah bucket tidak menolong — setiap pemetaan dari ruang kontinu ke diskret selalu punya batas, dan sebagian benda nyata pasti duduk di dekatnya.
+
+Jadi signature sekarang cukup `archetype:label`. Warna tetap menentukan tint kreatur, jadi kreatur tetap terlihat seperti benda asalnya, tapi janji "benda yang sama = kreatur yang sama" jadi **berlaku mutlak, bukan sekadar sering benar**.
+
+Konsekuensi yang diterima: semua "mug" menghasilkan kreatur yang sama, gelas biru dan gelas merah tidak lagi jadi dua kreatur berbeda. Itu justru memberi mekanik duplikat sesuatu untuk dikerjakan, dan variasi koleksi tetap datang dari ratusan label berbeda di rumah.
 
 ---
 

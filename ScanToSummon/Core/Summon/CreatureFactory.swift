@@ -17,7 +17,7 @@ public struct CreatureFactory {
     public func make(observations: [ScanObservation], averageColor: ColorRGB) -> Creature {
         let match = mapper.map(observations: observations)
         let tint = averageColor.vivid()
-        let signature = Self.signature(archetype: match.archetype, label: match.label, color: averageColor)
+        let signature = Self.signature(archetype: match.archetype, label: match.label)
         let seed = StableHash.fnv1a(signature)
 
         return Creature(
@@ -30,13 +30,14 @@ public struct CreatureFactory {
         )
     }
 
-    /// Identity key for a scan.
+    /// Identity key for a scan: what the object *is*, and nothing else.
     ///
-    /// Colour goes through `bucketKey` rather than in full, otherwise a
-    /// one-percent lighting change would mint a brand new creature from the
-    /// same mug and duplicates would never be detected.
-    public static func signature(archetype: Archetype, label: String, color: ColorRGB) -> String {
+    /// Colour is deliberately absent. It varies with lighting, so any attempt
+    /// to fold it in — even bucketed — lets one mug produce two creatures
+    /// whenever its average colour lands near a bucket edge. See the note in
+    /// `ColorRGB`. The object's colour still reaches the creature as its tint.
+    public static func signature(archetype: Archetype, label: String) -> String {
         let normalizedLabel = ArchetypeMapper.tokenize(label).joined(separator: "-")
-        return "\(archetype.rawValue):\(normalizedLabel):\(color.bucketKey)"
+        return "\(archetype.rawValue):\(normalizedLabel)"
     }
 }

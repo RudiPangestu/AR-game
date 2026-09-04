@@ -161,15 +161,30 @@ final class BattleEngineTests: XCTestCase {
 
     func testInvalidPlayerInputIsRejectedRatherThanApplied() {
         var engine = makeEngine()
-        guard engine.isAwaitingPlayerInput else { return XCTFail("expected a player turn") }
+
+        // Whether the player or an opponent holds the first turn depends on
+        // speed, so wind forward rather than assuming. (A fast glass creature
+        // opens this particular matchup.)
+        var steps = 0
+        while !engine.isAwaitingPlayerInput && engine.outcome == nil && steps < 20 {
+            engine.advance()
+            steps += 1
+        }
+        guard engine.isAwaitingPlayerInput else { return XCTFail("never reached a player turn") }
+
+        let logBefore = engine.log.count
+        let hpBefore = engine.units.map(\.currentHP)
 
         // Targeting one of your own creatures must not do anything.
         let ownUnit = engine.aliveUnits(on: .player)[1]
         XCTAssertFalse(engine.takePlayerTurn(move: .basic, targetID: ownUnit.id))
-        XCTAssertTrue(engine.log.isEmpty)
 
+        // Nor must targeting a creature that is not in this battle.
         XCTAssertFalse(engine.takePlayerTurn(move: .basic, targetID: UUID()))
-        XCTAssertTrue(engine.log.isEmpty)
+
+        XCTAssertEqual(engine.log.count, logBefore, "a rejected move must not write to the log")
+        XCTAssertEqual(engine.units.map(\.currentHP), hpBefore, "a rejected move must not deal damage")
+        XCTAssertTrue(engine.isAwaitingPlayerInput, "a rejected move must not consume the turn")
     }
 
     func testDamageIsNeverZero() {
