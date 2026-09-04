@@ -65,7 +65,9 @@ final class TypeChartTests: XCTestCase {
 final class BattleEngineTests: XCTestCase {
 
     private let playerTeam = [makeCreature(.ember), makeCreature(.ferro), makeCreature(.aqua)]
-    private let enemyTeam = [makeCreature(.verdant), makeCreature(.air), makeCreature(.glass)]
+    // `.textil` rather than `.air`: air is an Element, and the archetypes that
+    // fight as air are textil and paper.
+    private let enemyTeam = [makeCreature(.verdant), makeCreature(.textil), makeCreature(.glass)]
 
     private func makeEngine(seed: UInt64 = 7) -> BattleEngine {
         BattleEngine(playerTeam: playerTeam, enemyTeam: enemyTeam, seed: seed)
